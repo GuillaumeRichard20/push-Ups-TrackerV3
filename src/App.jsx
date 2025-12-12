@@ -105,10 +105,30 @@ const regenerateTargets = (currentDays, currentDayNum, difficultyFactor = 1.0) =
 
         let k = i - 1;
         while (k >= 0 && days[k].isRestDay) k--;
-
+        
         if (k >= 0) {
             const prevDay = days[k];
-            let base = prevDay.day < currentDayNum ? prevDay.banked : prevDay.target;
+            
+            // NEW LOGIC: If prev day is incomplete (in the past and not completed),
+            // look back to find the last COMPLETED day
+            let base;
+            if (prevDay.day < currentDayNum && !prevDay.completed) {
+                // Find last completed day
+                let j = k - 1;
+                while (j >= 0) {
+                    if (days[j].completed && !days[j].isRestDay) {
+                        base = days[j].banked;
+                        break;
+                    }
+                    j--;
+                }
+                // If no completed day found, use minimum
+                if (base === undefined) base = 20;
+            } else {
+                // Use normal logic: banked if past, target if current/future
+                base = prevDay.day < currentDayNum ? prevDay.banked : prevDay.target;
+            }
+            
             base = Math.max(base, 20); // Min floor
             
             // Phase Logic (Aggressive)
